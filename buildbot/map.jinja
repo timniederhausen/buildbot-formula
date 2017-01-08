@@ -1,0 +1,16 @@
+{% import_yaml 'buildbot/defaults.yaml' as defaults %}
+{% import_yaml 'buildbot/osmap.yaml' as osmap %}
+
+{# get the settings for the os_family grain #}
+{% set osfam = salt['grains.filter_by'](osmap) or {} %}
+
+{# merge the os family/codename specific data over the defaults #}
+{% do defaults.buildbot.update(osfam) %}
+
+{# merge the pillar:lookup dict into the defaults/os specific dict #}
+{% set lookup = salt['pillar.get']('buildbot:lookup',
+                                   default=defaults.buildbot,
+                                   merge=True) %}
+
+{# merge the actual buildbot pillar into the above combined dict #}
+{% set buildbot = salt['pillar.get']('buildbot', default=lookup, merge=True) %}

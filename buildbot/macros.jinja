@@ -1,0 +1,11 @@
+{% macro sls_block(dict) %}
+{% for key, value in dict.items() %}
+- {{ key }}: {{ value|json() }}
+{% endfor %}
+{% endmacro %}
+
+{% macro labels(labels) %}
+{% for label in labels %}
+- {{ label }}
+{% endfor %}
+{% endmacro %}

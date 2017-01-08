@@ -1,0 +1,13 @@
+buildbot:
+  virtualenv:
+    directory: /usr/local/buildbot/virtualenv
+  source:
+    url: https://github.com/timniederhausen/buildbot.git
+    checkout: /usr/local/buildbot/git
+    branch: eight
+    revision: eight
+    components:
+      - master
+      - slave
+  slaves: []
+  masters: []

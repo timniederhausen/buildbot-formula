@@ -1,0 +1,5 @@
+FreeBSD:
+  packages:
+    - python
+    - py27-sqlite3
+    - py27-virtualenv
