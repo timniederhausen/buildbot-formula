@@ -2,7 +2,7 @@
 {% from 'buildbot/macros.jinja' import sls_block, labels with context %}
 
 {% for pkg in buildbot.packages %}
-{{ pkg }}:
+buildbot_{{ pkg }}:
   pkg.installed:
     - name: {{ pkg }}
 {% endfor %}
