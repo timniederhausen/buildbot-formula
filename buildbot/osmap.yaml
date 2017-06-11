@@ -3,3 +3,4 @@ FreeBSD:
     - python
     - py27-sqlite3
     - py27-virtualenv
+    - py27-pip
