@@ -18,7 +18,7 @@ buildbot_git:
     - target: {{ buildbot.source.checkout }}
     - rev: {{ buildbot.source.revision }}
     - branch: {{ buildbot.source.branch }}
-    - force_reset: True
+    - force_reset: true
 
 {% for dir in buildbot.source.components %}
 buildbot_pip_{{ dir }}:
@@ -55,7 +55,8 @@ buildbot_{{ master.name }}_config:
     - user: {{ master.user }}
     - rev: master
     - branch: master
-    - force_reset: True
+    - force_reset: true
+    - force_fetch: true
 
 buildbot_{{ master.name }}_create:
   cmd.run:
@@ -73,6 +74,25 @@ buildbot_{{ master.name }}_upgrade:
     - onchanges:
       - git: buildbot_{{ master.name }}_config
       {{ labels(deps) | indent(6) }}
+{% if grains.os_family == 'FreeBSD' %}
+{%- set fullname = 'buildbot_' + master.name -%}
+buildbot_{{ master.name }}_rc:
+  file.managed:
+    - name: /usr/local/etc/rc.d/{{ fullname }}
+    - source: salt://buildbot/files/freebsd-rc.sh
+    - template: jinja
+    - mode: 755
+    - context:
+        fullname: {{ fullname | yaml_encode }}
+        directory: {{ root | yaml_encode }}
+        user: {{ master.user | yaml_encode }}
+        virtualenv: {{ buildbot.virtualenv.directory | yaml_encode }}
+        executable: buildbot
+buildbot_{{ master.name }}_svc:
+  service.running:
+    - name: {{ fullname }}
+    - enable: true
+{% endif %}
 {% endfor %}
 
 {% for slave in buildbot.slaves %}
@@ -112,4 +132,23 @@ buildslave_{{ slave.name }}_host:
     - user: {{ slave.user }}
     - group: {{ slave.group }}
     {{ sls_block(slave.host) | indent(4) }}
+{% if grains.os_family == 'FreeBSD' %}
+{%- set fullname = 'buildslave_' + slave.name -%}
+buildslave_{{ slave.name }}_rc:
+  file.managed:
+    - name: /usr/local/etc/rc.d/{{ fullname }}
+    - source: salt://buildbot/files/freebsd-rc.sh
+    - template: jinja
+    - mode: 755
+    - context:
+        fullname: {{ fullname | yaml_encode }}
+        directory: {{ root | yaml_encode }}
+        user: {{ slave.user | yaml_encode }}
+        virtualenv: {{ buildbot.virtualenv.directory | yaml_encode }}
+        executable: buildslave
+buildslave_{{ slave.name }}_svc:
+  service.running:
+    - name: {{ fullname }}
+    - enable: true
+{% endif %}
 {% endfor %}
