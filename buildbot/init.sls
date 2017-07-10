@@ -92,6 +92,9 @@ buildbot_{{ master.name }}_svc:
   service.running:
     - name: {{ fullname }}
     - enable: true
+    - watch:
+      - git: buildbot_{{ master.name }}_config
+      - file: buildbot_{{ master.name }}_rc
 {% endif %}
 {% endfor %}
 
