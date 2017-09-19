@@ -9,5 +9,5 @@ buildbot:
     components:
       - master
       - slave
-  slaves: []
-  masters: []
+  slaves: {}
+  masters: {}

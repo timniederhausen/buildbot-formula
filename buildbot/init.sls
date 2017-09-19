@@ -31,24 +31,24 @@ buildbot_pip_{{ dir }}:
 {% do deps.append('pip: buildbot_pip_' + dir) %}
 {% endfor %}
 
-{% for master in buildbot.masters %}
-{% set root = master.get('root', '/home/' + master.user + '/' + master.name) %}
-buildbot_{{ master.name }}_user:
+{% for name, master in buildbot.masters.items() %}
+{% set root = master.get('root', '/home/' + master.user + '/' + name) %}
+buildbot_{{ name }}_user:
   user.present:
     - name: {{ master.user }}
 
-buildbot_{{ master.name }}_group:
+buildbot_{{ name }}_group:
   group.present:
     - name: {{ master.group }}
 
-buildbot_{{ master.name }}_root:
+buildbot_{{ name }}_root:
   file.directory:
     - name: {{ root }}
     - user: {{ master.user }}
     - group: {{ master.group }}
     - makedirs: true
 
-buildbot_{{ master.name }}_config:
+buildbot_{{ name }}_config:
   git.latest:
     - name: {{ master.config_url }}
     - target: {{ root }}
@@ -58,25 +58,25 @@ buildbot_{{ master.name }}_config:
     - force_reset: true
     - force_fetch: true
 
-buildbot_{{ master.name }}_create:
+buildbot_{{ name }}_create:
   cmd.run:
     - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildbot create-master"'
     - cwd: {{ root }}
     - runas: {{ master.user }}
     - creates: '{{ root }}/buildbot.tac'
 
-buildbot_{{ master.name }}_upgrade:
+buildbot_{{ name }}_upgrade:
   cmd.run:
     - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildbot upgrade-master"'
     - cwd: {{ root }}
     - runas: {{ master.user }}
     - creates: '{{ root }}/buildbot.tac'
     - onchanges:
-      - git: buildbot_{{ master.name }}_config
+      - git: buildbot_{{ name }}_config
       {{ labels(deps) | indent(6) }}
 {% if grains.os_family == 'FreeBSD' %}
-{%- set fullname = 'buildbot_' + master.name -%}
-buildbot_{{ master.name }}_rc:
+{%- set fullname = 'buildbot_' + name -%}
+buildbot_{{ name }}_rc:
   file.managed:
     - name: /usr/local/etc/rc.d/{{ fullname }}
     - source: salt://buildbot/files/freebsd-rc.sh
@@ -88,56 +88,56 @@ buildbot_{{ master.name }}_rc:
         user: {{ master.user | yaml_encode }}
         virtualenv: {{ buildbot.virtualenv.directory | yaml_encode }}
         executable: buildbot
-buildbot_{{ master.name }}_svc:
+buildbot_{{ name }}_svc:
   service.running:
     - name: {{ fullname }}
     - enable: true
     - watch:
-      - git: buildbot_{{ master.name }}_config
-      - file: buildbot_{{ master.name }}_rc
+      - git: buildbot_{{ name }}_config
+      - file: buildbot_{{ name }}_rc
 {% endif %}
 {% endfor %}
 
-{% for slave in buildbot.slaves %}
-{% set root = slave.get('root', '/home/' + slave.user + '/' + slave.name) %}
-buildslave_{{ slave.name }}_user:
+{% for name, slave in buildbot.slaves.items() %}
+{% set root = slave.get('root', '/home/' + slave.user + '/' + name) %}
+buildslave_{{ name }}_user:
   user.present:
     - name: {{ slave.user }}
 
-buildslave_{{ slave.name }}_group:
+buildslave_{{ name }}_group:
   group.present:
     - name: {{ slave.group }}
 
-buildslave_{{ slave.name }}_root:
+buildslave_{{ name }}_root:
   file.directory:
     - name: {{ root }}
     - user: {{ slave.user }}
     - group: {{ slave.group }}
     - makedirs: true
 
-buildslave_{{ slave.name }}_create:
+buildslave_{{ name }}_create:
   cmd.run:
-    - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildslave create-slave {{ root }} {{ slave.master }} {{ slave.name }} {{ slave.password }}"'
+    - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildslave create-slave {{ root }} {{ slave.master }} {{ slave.name | default(name) }} {{ slave.password }}"'
     - cwd: {{ root }}
     - runas: {{ slave.user }}
     - creates: '{{ root }}/buildbot.tac'
 
-buildslave_{{ slave.name }}_admin:
+buildslave_{{ name }}_admin:
   file.managed:
     - name: {{ root }}/info/admin
     - user: {{ slave.user }}
     - group: {{ slave.group }}
     {{ sls_block(slave.admin) | indent(4) }}
 
-buildslave_{{ slave.name }}_host:
+buildslave_{{ name }}_host:
   file.managed:
     - name: {{ root }}/info/host
     - user: {{ slave.user }}
     - group: {{ slave.group }}
     {{ sls_block(slave.host) | indent(4) }}
 {% if grains.os_family == 'FreeBSD' %}
-{%- set fullname = 'buildslave_' + slave.name -%}
-buildslave_{{ slave.name }}_rc:
+{%- set fullname = 'buildslave_' + name -%}
+buildslave_{{ name }}_rc:
   file.managed:
     - name: /usr/local/etc/rc.d/{{ fullname }}
     - source: salt://buildbot/files/freebsd-rc.sh
@@ -149,7 +149,7 @@ buildslave_{{ slave.name }}_rc:
         user: {{ slave.user | yaml_encode }}
         virtualenv: {{ buildbot.virtualenv.directory | yaml_encode }}
         executable: buildslave
-buildslave_{{ slave.name }}_svc:
+buildslave_{{ name }}_svc:
   service.running:
     - name: {{ fullname }}
     - enable: true
