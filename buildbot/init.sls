@@ -60,14 +60,14 @@ buildbot_{{ master.name }}_config:
 
 buildbot_{{ master.name }}_create:
   cmd.run:
-    - name: '. {{ buildbot.virtualenv.directory }}/bin/activate && buildbot create-master'
+    - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildbot create-master"'
     - cwd: {{ root }}
     - runas: {{ master.user }}
     - creates: '{{ root }}/buildbot.tac'
 
 buildbot_{{ master.name }}_upgrade:
   cmd.run:
-    - name: '. {{ buildbot.virtualenv.directory }}/bin/activate && buildbot upgrade-master'
+    - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildbot upgrade-master"'
     - cwd: {{ root }}
     - runas: {{ master.user }}
     - creates: '{{ root }}/buildbot.tac'
@@ -117,7 +117,7 @@ buildslave_{{ slave.name }}_root:
 
 buildslave_{{ slave.name }}_create:
   cmd.run:
-    - name: '. {{ buildbot.virtualenv.directory }}/bin/activate && buildslave create-slave {{ root }} {{ slave.master }} {{ slave.name }} {{ slave.password }}'
+    - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildslave create-slave {{ root }} {{ slave.master }} {{ slave.name }} {{ slave.password }}"'
     - cwd: {{ root }}
     - runas: {{ slave.user }}
     - creates: '{{ root }}/buildbot.tac'
