@@ -153,5 +153,8 @@ buildslave_{{ name }}_svc:
   service.running:
     - name: {{ fullname }}
     - enable: true
+    - watch:
+      - file: buildslave_{{ name }}_admin
+      - file: buildslave_{{ name }}_host
 {% endif %}
 {% endfor %}
