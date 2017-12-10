@@ -58,6 +58,16 @@ buildbot_{{ name }}_config:
     - force_reset: true
     - force_fetch: true
 
+{% if master.get('has_requirements', False) %}
+buildbot_{{ name }}_pip:
+  pip.installed:
+    - requirements: {{ root }}/requirements.txt
+    - bin_env: {{ buildbot.virtualenv.directory }}
+    - require:
+      - git: buildbot_{{ name }}_config
+      - virtualenv: buildbot_venv
+{% endif %}
+
 buildbot_{{ name }}_create:
   cmd.run:
     - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildbot create-master"'
