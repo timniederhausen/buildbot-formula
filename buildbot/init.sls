@@ -10,6 +10,7 @@ buildbot_{{ pkg }}:
 buildbot_venv:
   virtualenv.managed:
     - name: {{ buildbot.virtualenv.directory }}
+    - venv_bin: {{ buildbot.virtualenv.bin }}
 
 {% set deps = [] %}
 buildbot_git:
