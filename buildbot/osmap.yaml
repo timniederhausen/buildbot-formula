@@ -1,9 +1,8 @@
 FreeBSD:
   packages:
     - python
-    - py27-sqlite3
-    - py27-virtualenv
-    - py27-pip
+    - py37-sqlite3
+    - py37-virtualenv
     - py37-pip
   virtualenv:
-    bin: virtualenv-2.7
+    bin: virtualenv-3.7

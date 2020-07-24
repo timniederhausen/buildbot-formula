@@ -12,25 +12,12 @@ buildbot_venv:
     - name: {{ buildbot.virtualenv.directory }}
     - venv_bin: {{ buildbot.virtualenv.bin }}
 
-{% set deps = [] %}
-buildbot_git:
-  git.latest:
-    - name: {{ buildbot.source.url }}
-    - target: {{ buildbot.source.checkout }}
-    - rev: {{ buildbot.source.revision }}
-    - branch: {{ buildbot.source.branch }}
-    - force_reset: true
-
-{% for dir in buildbot.source.components %}
-buildbot_pip_{{ dir }}:
+buildbot_pip:
   pip.installed:
-    - name: {{ buildbot.source.checkout }}/{{ dir }}
+    - name: 'buildbot[bundle]'
     - bin_env: {{ buildbot.virtualenv.directory }}
     - require:
-      - git: buildbot_git
       - virtualenv: buildbot_venv
-{% do deps.append('pip: buildbot_pip_' + dir) %}
-{% endfor %}
 
 {% for name, master in buildbot.masters.items() %}
 {% set root = master.get('root', '/home/' + master.user + '/' + name) %}
@@ -84,7 +71,7 @@ buildbot_{{ name }}_upgrade:
     - creates: '{{ root }}/buildbot.tac'
     - onchanges:
       - git: buildbot_{{ name }}_config
-      {{ labels(deps) | indent(6) }}
+      - pip: buildbot_pip
 {% if grains.os_family == 'FreeBSD' %}
 {%- set fullname = 'buildbot_' + name -%}
 buildbot_{{ name }}_rc:
@@ -128,7 +115,7 @@ buildslave_{{ name }}_root:
 
 buildslave_{{ name }}_create:
   cmd.run:
-    - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildslave create-slave {{ root }} {{ slave.master }} {{ slave.name | default(name) }} {{ slave.password }}"'
+    - name: 'sh -c ". {{ buildbot.virtualenv.directory }}/bin/activate && buildbot-worker create-worker {{ root }} {{ slave.master }} {{ slave.name | default(name) }} {{ slave.password }}"'
     - cwd: {{ root }}
     - runas: {{ slave.user }}
     - creates: '{{ root }}/buildbot.tac'
@@ -159,7 +146,7 @@ buildslave_{{ name }}_rc:
         directory: {{ root | yaml_encode }}
         user: {{ slave.user | yaml_encode }}
         virtualenv: {{ buildbot.virtualenv.directory | yaml_encode }}
-        executable: buildslave
+        executable: buildbot-worker
 buildslave_{{ name }}_svc:
   service.running:
     - name: {{ fullname }}

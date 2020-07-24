@@ -22,7 +22,7 @@ required_dirs={{ directory }}
 pidfile={{ directory }}/daemon.pid
 procname={{ virtualenv }}/bin/{{ executable }}
 command=/usr/sbin/daemon
-command_interpreter={{ virtualenv }}/bin/python2.7
+command_interpreter={{ virtualenv }}/bin/python
 command_args="-p ${pidfile} -f ${procname} start --nodaemon"
 
 start_precmd="buildbot_precmd"
